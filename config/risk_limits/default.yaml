@@ -1,0 +1,29 @@
+# Deterministic hard risk limits (policy as data).
+# Changing this file is a policy change: it requires review and a version bump.
+# No runtime component may widen a limit; the risk engine only tightens.
+policy_version: "risk-limits-1.0.0"
+
+# Maximum weight of a single position, as a fraction of total equity.
+max_position_weight: 0.10
+
+# Maximum gross exposure (sum of absolute position weights). 1.0 = unlevered.
+max_gross_exposure: 1.0
+
+# Maximum fraction of equity that may be lost if a single new trade hits its
+# invalidation level (stop distance x size).
+max_risk_per_trade_pct: 0.01
+
+# Daily loss beyond which the circuit breaker blocks all new risk.
+max_daily_loss_pct: 0.03
+
+# Peak-to-trough drawdown beyond which the circuit breaker trips.
+max_drawdown_pct: 0.15
+
+# Cash reserve that may never be deployed.
+min_cash_reserve_pct: 0.05
+
+# Maximum share of a symbol's average daily volume one order may consume.
+max_participation_of_adv: 0.05
+
+# Maximum number of simultaneous positions.
+max_positions: 20

@@ -1,0 +1,31 @@
+# Runtime state, credentials, raw records, and generated reports must never be committed.
+.env
+*.env.local
+secrets/
+logs/
+reports/
+data_cache/
+state/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
