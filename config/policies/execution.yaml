@@ -1,0 +1,16 @@
+# Execution gateway policy (policy as data).
+policy_version: "execution-policy-1.0.0"
+
+# The platform always starts in SIMULATION. Live modes are unreachable until a
+# live broker adapter exists and every go-live gate has recorded evidence.
+default_mode: "SIMULATION"
+
+# An approval record is valid for this long after it is granted.
+approval_ttl_seconds: 300
+
+# A broker account snapshot older than this cannot support a submission;
+# the gateway must requery immediately before submitting.
+broker_snapshot_max_age_seconds: 30
+
+# Modes in which a human approval record is mandatory for every intent.
+require_human_approval_in: ["APPROVAL_REQUIRED", "LIMITED_AUTOPILOT", "PAPER"]
