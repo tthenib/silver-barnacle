@@ -225,6 +225,45 @@ fire is decoration.
 
 ---
 
+## 1.14 Account access: there is no MT5 "API key"
+
+MetaTrader 5 has no API-key model. Account access is a **terminal login**: account number,
+password, and broker server name, with an optional read-only *investor password*. The MQL5
+Python integration exposes a `login()` function taking those account parameters — not a token.
+
+The Python package obtains data "via interprocessor communication **directly from the
+MetaTrader 5 terminal**", i.e. it requires a MetaTrader 5 terminal installed, running, and
+logged in **on the same machine**. It is a client for a local terminal, not a remote API client.
+Source: [MQL5 Reference — MetaTrader for Python](https://www.mql5.com/en/docs/python_metatrader5)
+
+*Measured in this build environment (2026-08-18):* Linux x86_64, no terminal present, and
+`pip install MetaTrader5` resolves to **no matching distribution**. The package cannot be
+installed here at all.
+
+### Consequence for how this project is operated
+
+Credentials must **not** be pasted into a session transcript, and would be useless here if they
+were. The correct division of labour:
+
+- **The operator's machine** runs the terminal, the Strategy Tester, and the demo account.
+- **This environment** produces the source, the harness, and the analysis.
+- **The interface between them is data, not access** — journals and CSV exports move in;
+  code and configuration move out.
+
+What is genuinely needed from the operator's terminal is a set of **non-secret environment
+facts**, produced by scripts this project supplies and resolving open items V-5 to V-7 below:
+
+| Script (stage) | Produces | Resolves |
+|---|---|---|
+| `ExportSymbolSpecs.mq5` (S1) | Per-symbol volume min/max/step/limit, tick size, tick value, contract size, digits, stops level, freeze level, margin rates, swap rates | Sizing golden table; `SelfTest` fixtures; V-6 |
+| `ExportTickStats.mq5` (S1) | Real-tick history depth and spread distribution per symbol | Backtest modelling strategy; cost tolerance baseline; V-5 |
+| Account properties dump (S1) | `ACCOUNT_MARGIN_MODE` (hedging vs netting), account currency, leverage, broker + server name, terminal build | V-7; execution semantics; run manifest provenance |
+
+None of these are secrets. All are recorded in the run manifest so that every result carries the
+environment it was measured in.
+
+---
+
 # Part 3 — Open items to verify before they are relied upon
 
 | # | Item | Needed by | Status |

@@ -2,7 +2,7 @@
 
 A MetaTrader 5 / MQL5 **quantitative trading research and paper-trading system**.
 
-Starting capital: **£2,000, demo only.**
+Starting capital: **£100,000, demo/paper only.**
 
 ---
 
@@ -108,8 +108,8 @@ test. If it passes any gate, the harness is broken and every result it ever prod
 
 Three research PDFs were provided and reconciled under the priority
 **revised spec > research foundation > original spec**. Thirteen contradictions were identified
-and resolved in [00](docs/00-consolidated-understanding.md), including the £20 → £2,000 capital
-change, return targets (removed), fixed reward:risk ratios (rejected), and signal summation
+and resolved in [00](docs/00-consolidated-understanding.md), including the capital figure (now
+£100,000 per the current instruction, superseding both the £20 and £2,000 in the documents), return targets (removed), fixed reward:risk ratios (rejected), and signal summation
 (rejected).
 
 Two caveats apply to all three documents and are carried throughout:

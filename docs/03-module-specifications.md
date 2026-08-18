@@ -352,27 +352,42 @@ public:
 };
 ```
 
-### Lot quantisation is a first-class constraint at £2,000
+### Lot quantisation: resolved at £100,000, but the checks stay
 
-Worked example, EURUSD, £2,000 basis, 0.5% risk target (£10), 50-pip stop:
+At the original £2,000 this was a first-class constraint. It no longer is, and the arithmetic
+is worth recording so the change is understood rather than assumed.
 
-- 0.01 lots × 50 pips ≈ $5 ≈ **£4** of risk → 0.20% of basis
-- Desired £10 ⇒ ~0.025 lots ⇒ rounds **down** to 0.02 lots ⇒ **£8** actual risk ⇒ 0.40%
+EURUSD, 0.5% risk target, 50-pip stop. One 0.01-lot step risks ≈ $5 ≈ **£4**:
 
-Realised risk is **80% of intended**, and the achievable risk grid is ~0.20% wide. On
-instruments with larger minimum increments the grid is coarser still.
+| Basis | Risk target | Desired lots | Quantised (step 0.01) | Realised risk | Grid width |
+|-------|------------|--------------|----------------------|---------------|-----------|
+| £2,000 | £10 | 0.025 | **0.02** | £8 = **80% of intended** | 0.20% of equity |
+| £100,000 | £500 | 1.25 | **1.25** | £500 = **100%** | 0.004% of equity |
 
-Three consequences, all of which are designed for rather than discovered later:
+The grid is ~50× finer and ceases to bind for liquid instruments.
 
-1. `SizingResult.quantisation_error` is logged on every trade, and the harness reports the
-   distribution. A strategy whose realised risk is systematically 60% of intended has a
-   materially different return profile from the one its parameters describe.
+**The constraint inverts rather than disappearing.** At £2,000 the danger was the volume
+*floor* — trades too small to size correctly. At £100,000 it is the volume *ceiling*:
+`SYMBOL_VOLUME_MAX`, `SYMBOL_VOLUME_LIMIT` (aggregate one-directional exposure), and margin
+now bind first. A 0.5% risk against a tight stop — say 5 pips on a volatile instrument — is
+~10 lots rather than ~1.25, and that is where a cap will actually be hit.
+
+All four behaviours below are retained unchanged, because they are ratio-based and a future
+change of basis, instrument, or stop width can make any of them bind again:
+
+1. `SizingResult.quantisation_error` is logged on every trade and its distribution reported.
+   Expected to be ≈0 now; a non-zero distribution is a signal that something (a coarse
+   instrument, an unusually wide stop) is behaving unlike the rest of the panel.
 2. Rounding is **always down**. Rounding to nearest would let realised risk exceed the
    configured cap, which would make the cap a suggestion.
-3. Sub-minimum sizing produces a **rejection**, logged to `RejectJournal` with reason
-   `SIZE_BELOW_MINIMUM` — not a silent minimum-lot trade. Silently trading the minimum is how
-   a "0.5% risk" system ends up taking 2% risk on its most volatile instruments, which are
-   precisely the ones where a wide stop forces the smallest size.
+3. Sub-minimum sizing produces a **rejection** logged with `SIZE_BELOW_MINIMUM` — never a
+   silent minimum-lot trade. Silently trading the minimum is how a "0.5% risk" system ends up
+   taking 2% risk on its most volatile instruments, which are precisely the ones where a wide
+   stop forces the smallest size.
+4. Sizing **clamped at the ceiling** produces a rejection or a logged clamp with
+   `SIZE_ABOVE_MAXIMUM`, never a silently truncated position. A position capped at 60% of its
+   intended size is a different trade from the one the strategy asked for, and the journal must
+   say so or the realised strategy diverges from the tested one without trace.
 
 **Tests.** Golden table of (equity, risk %, stop distance, symbol spec) → expected lots,
 covering 5-digit FX, JPY pairs (different pip scale), gold, and an index. Rounding is never up.
@@ -414,7 +429,7 @@ public:
 | 4 | Consecutive-loss cooldown active | `LOSS_STREAK_COOLDOWN` |
 | 5 | Max open positions (total and per symbol) | `MAX_POSITIONS` |
 | 6 | Duplicate intent already in flight | `DUPLICATE_INTENT` |
-| 7 | Sizing succeeded and is above minimum | `SIZE_BELOW_MINIMUM` |
+| 7 | Sizing succeeded, above minimum and within volume/`VOLUME_LIMIT` ceiling | `SIZE_BELOW_MINIMUM` / `SIZE_ABOVE_MAXIMUM` |
 | 8 | Achieved risk ≤ per-trade cap | `PER_TRADE_RISK_EXCEEDED` |
 | 9 | Portfolio heat after this trade ≤ cap | `PORTFOLIO_HEAT_EXCEEDED` |
 | 10 | Correlated (factor) heat ≤ cap | `CORRELATED_EXPOSURE_EXCEEDED` |
@@ -530,10 +545,11 @@ SizingBasis = min( account_equity,
 - `equity` in the `min` means a drawdown reduces size immediately, without waiting for a
   period-end allocation event.
 - `initial_capital × max_capital_scale` is the hard ceiling: risk cannot more than double
-  without a human changing a parameter and re-validating. Growth from £2,000 to £4,000 scales
-  risk; growth beyond that requires a deliberate decision, because a strategy validated at
-  £2,000 position sizes has not been validated at £20,000 ones — market impact, margin
-  behaviour, and the quantisation grid all change.
+  without a human changing a parameter and re-validating. Growth from £100,000 to £200,000
+  scales risk; growth beyond that requires a deliberate decision, because a strategy validated
+  at one position-size regime has not been validated at another — margin behaviour, the volume
+  ceiling, and (if the system were ever run with real capital) fill quality all change with
+  size.
 
 **Tests.** HWM logic across gain → loss → regain (reserve must not double-count). One-way
 property under drawdown. `SizingBasis` never exceeds the scale ceiling. Ledger identity

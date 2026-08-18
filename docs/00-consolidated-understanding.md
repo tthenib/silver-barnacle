@@ -43,7 +43,7 @@ not used as reference implementation.
 A **research and paper-trading system**, built on MetaTrader 5 / MQL5, whose purpose is to
 determine — with enough statistical discipline that the answer is trustworthy — whether a
 systematic trading strategy with genuinely positive out-of-sample expectancy can be
-constructed and operated on a £2,000 demo account.
+constructed and operated on a £100,000 demo/paper account.
 
 The deliverable is *the apparatus and the verdict*, not a profitable bot. A well-built
 apparatus that returns the verdict "no edge found" has succeeded. An apparatus that returns
@@ -89,18 +89,38 @@ These are carried forward without further debate:
 
 ## 4. Contradictions and their resolutions
 
-### C1 — Starting capital: £20 (D1) vs £2,000 (D2, D3)
+### C1 — Starting capital: £20 (D1) vs £2,000 (D2, D3) vs £100,000 (current instruction)
 
-**Resolution: £2,000.** Directed by the brief and supported by the two newer documents.
+**Resolution: £100,000, demo/paper.** Superseding both figures in the source documents, per
+direct instruction on 2026-08-18. The document-priority rule is not in play here — a later
+instruction from the project owner outranks all three PDFs.
 
-*Why it matters beyond a number:* D1's £20 premise drove several of its design conclusions —
-"scalping is not recommended", "even a 50% drawdown is effectively ruin", "target 10×/100×".
-Those conclusions are artefacts of the £20 assumption and are **discarded along with it**.
-At £2,000 the binding constraint is no longer survival-per-trade but *lot quantisation*: the
-minimum tradeable size on most instruments corresponds to a risk step of roughly 0.2–0.4% of
-equity, which is a coarse grid relative to a 0.5% risk target. This is a real and
-under-appreciated constraint and it is treated as a first-class modelling concern
-(see [`03-module-specifications.md`](03-module-specifications.md) §Risk/LotQuantiser).
+*Why it matters beyond a number.* D1's £20 premise drove several of its design conclusions —
+"scalping is not recommended", "even a 50% drawdown is effectively ruin", "target 10×/100×" —
+and those are artefacts of the assumption, **discarded along with it**.
+
+The £2,000 figure carried its own artefact, now also discarded: at £2,000 the binding
+constraint was *lot quantisation*, because the minimum tradeable size on most instruments
+corresponds to a risk step of roughly 0.2–0.4% of equity — a coarse grid against a 0.5% risk
+target. At £100,000 that grid is ~50× finer and effectively vanishes for liquid instruments.
+
+**What the increase does and does not change** is the important part, because it is easy to
+assume more capital improves the research position. It does not:
+
+| | Effect of £2,000 → £100,000 |
+|---|---|
+| Lot quantisation | **Resolved.** Grid falls from ~0.20% of equity to ~0.004%. See [`03`](03-module-specifications.md) §6 |
+| Achievable diversification | **Improved.** Concurrent positions are no longer limited by sizing granularity |
+| Instrument eligibility | **Widened.** Instruments with coarse contract sizes become tradeable at sane risk |
+| Binding sizing constraint | **Inverted** — from the volume *floor* to the volume *ceiling* and margin |
+| **Statistical power** | **Unchanged. Exactly.** §5 below contains no capital term |
+| Anti-overfitting machinery, gates, splits, trial counting | Unchanged |
+| Risk *fractions* (per-trade, heat, drawdown limits) | Unchanged — they are set by drawdown tolerance, which is scale-invariant |
+
+The middle row is the one to internalise. A 50× larger account buys zero additional evidence,
+while making a spurious result substantially more seductive: a fictitious 30% return now reads
+as £30,000 rather than £600, and a number that large is much harder to abandon on the strength
+of a confidence interval. The account size changed; the epistemics did not.
 
 ### C2 — Return targets: D1 "10×/100×"; D2 "20–50% CAGR aggressive blend"; brief "no claims"
 

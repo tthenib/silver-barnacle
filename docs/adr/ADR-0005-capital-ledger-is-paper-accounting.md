@@ -39,11 +39,16 @@ SizingBasis = min( account_equity,
 
 ## Why the third rule exists
 
-A strategy validated at £2,000 position sizes has not been validated at £20,000 ones. Market
-impact, margin behaviour, and the lot quantisation grid all change with size, and the
-quantisation grid changes *favourably*, which means larger accounts can take risks the validated
-system could not express. Unbounded compounding would silently move the system outside the
-regime in which its evidence was gathered.
+A strategy validated at one position-size regime has not been validated at another. Margin
+behaviour, the volume ceiling (`SYMBOL_VOLUME_MAX`, `SYMBOL_VOLUME_LIMIT`), and — were the
+system ever run with real capital — fill quality all change with size. Unbounded compounding
+would silently move the system outside the regime in which its evidence was gathered.
+
+At the original £2,000 basis the argument ran the other way round: the lot quantisation grid was
+coarse, and growth *loosened* it, letting a larger account express risks the validated system
+could not. At £100,000 quantisation is already resolved, so the ceiling now guards against the
+opposite end — growth pushing size toward volume and margin limits that the tested regime never
+touched. The rule is unchanged; only which limit it protects against has moved.
 
 ## Consequences
 

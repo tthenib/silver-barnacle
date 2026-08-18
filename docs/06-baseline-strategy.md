@@ -82,6 +82,34 @@ per instrument by hand; broad enough that the panel is not a single bet.
 seeing results is instrument cherry-picking, which is the most effective way to manufacture a
 false discovery, and it is invisible in the final report unless prevented up front.
 
+#### ⚠ Open decision: panel width at £100,000 — pending confirmation
+
+The six-instrument panel above was sized partly by the £2,000 constraint, where sizing
+granularity limited how many positions could be held at meaningful risk. At £100,000 that
+limit is gone, and §5 of [`00`](00-consolidated-understanding.md) argues directly for breadth:
+applying one rule across more weakly-correlated instruments accumulates evidence faster than
+any other lever available to this project.
+
+**Recommendation — widen to 10, adding risk factors rather than more USD legs:**
+
+| Addition | Group | New factor contributed |
+|----------|-------|------------------------|
+| EURJPY | fx_cross | First non-USD-legged pair — a genuinely different bet |
+| GER40 (or UK100) | equity_index | European equity + European session; US500 is US-session only |
+| USOIL | energy | Entirely new factor; historically strongly trending, so well suited to the baseline |
+| NZDUSD | fx_major | Modest FX breadth |
+
+Deliberately **not** added: USDCHF, USDCAD, more USD majors (the factor model would show these
+as largely the same USD bet); XAGUSD (highly correlated with the gold already in the panel);
+NAS100/US2000 (highly correlated with US500). Four more instruments that move together are four
+more chances to find a spurious pattern and almost no extra independent evidence.
+
+If the panel widens, per-position risk drops to 0.25% so the heat budget permits ~8 concurrent
+positions (see §3.5).
+
+**This must be settled before any test is run**, because revising it afterwards is
+cherry-picking. Until confirmed, the frozen panel remains the six above.
+
 ### 3.2 Timeframe and timing
 
 - **Decisions:** D1 bar close.
@@ -142,7 +170,7 @@ parameter count by six and destroy the breadth that makes the estimate credible.
 
 | Constraint | Baseline value | Reasoning |
 |------------|----------------|-----------|
-| Max open positions | 4 | Quantisation grid limits meaningful diversification at £2,000 |
+| Max open positions | 4 | Falls out of the heat budget: 4 × 0.5% = the 2.0% cap. Not a quantisation limit |
 | Max portfolio heat | 2.0% | Total simultaneous risk if every stop is hit |
 | Max factor exposure | 1.0% risk per factor | Prevents 4 disguised USD bets |
 | Max per-instrument exposure | 1 position | No stacking |
@@ -155,6 +183,14 @@ Portfolio heat of 2.0% with per-position risk of 0.5% means at most 4 concurrent
 be at full size — which is why the position cap and the heat cap are consistent rather than
 independently chosen. Under a fully correlated shock the worst case is a 2% day, which the daily
 loss limit also bounds.
+
+**These three numbers are coupled, and widening the panel means changing the per-position risk,
+not the heat.** Panel width, per-position risk, and portfolio heat cannot be set independently:
+`max_positions ≈ heat ÷ per_position_risk`. A 10-instrument panel that can only ever hold 4
+positions wastes most of its breadth, since the whole statistical argument for a wide panel is
+accumulating partly-independent observations concurrently. The correct adjustment is to **lower
+per-position risk** (0.25% → 8 concurrent positions) rather than to raise heat, because heat is
+the quantity bounded by drawdown tolerance and drawdown tolerance has not changed.
 
 ---
 
