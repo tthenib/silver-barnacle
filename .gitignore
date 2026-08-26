@@ -1,0 +1,20 @@
+# Raw market data is large and immutable; the manifest is tracked, the data is not.
+/data/**
+!/data/README.md
+!/data/manifest/
+!/data/manifest/**
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# MT5 build artefacts
+*.ex5
+*.ex4
+
+# OS / editor
+.DS_Store
+*.swp
