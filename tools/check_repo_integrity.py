@@ -19,12 +19,15 @@ from enum import Enum
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GENERATED_RESULTS = {
+GENERATED_RESULTS_REQUIRING_SCIENTIFIC_STACK = {
     ROOT / "results" / "return_target_feasibility.md": ROOT
     / "research"
     / "analysis"
     / "return_target_feasibility.py",
     ROOT / "results" / "lot_granularity.md": ROOT / "research" / "analysis" / "lot_granularity.py",
+}
+GENERATED_RESULTS_STDLIB_ONLY = {
+    ROOT / "results" / "research_power.md": ROOT / "research" / "analysis" / "research_power.py",
 }
 IGNORED_DIRS = {".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache"}
 LOCAL_MD_LINK = re.compile(r"(?<!!)\[[^\]]+\]\((?!https?://|mailto:|#)([^)]+)\)")
@@ -92,18 +95,9 @@ def missing_scientific_packages() -> list[str]:
     ]
 
 
-def check_generated_results(require_dependencies: bool) -> CheckResult:
-    missing_packages = missing_scientific_packages()
-    if missing_packages:
-        detail = (
-            "skipped freshness check because required packages are not installed: "
-            + ", ".join(missing_packages)
-        )
-        status = Status.FAIL if require_dependencies else Status.WARN
-        return CheckResult("generated results", status, detail)
-
+def stale_generated_files(generated_results: dict[Path, Path]) -> list[str]:
     stale: list[str] = []
-    for result_path, script_path in GENERATED_RESULTS.items():
+    for result_path, script_path in generated_results.items():
         completed = subprocess.run(
             [sys.executable, str(script_path.relative_to(ROOT))],
             cwd=ROOT,
@@ -114,9 +108,29 @@ def check_generated_results(require_dependencies: bool) -> CheckResult:
         expected = result_path.read_text(encoding="utf-8")
         if completed.stdout != expected:
             stale.append(f"{result_path.relative_to(ROOT)} is not current with {script_path.relative_to(ROOT)}")
+    return stale
+
+
+def check_generated_results(require_dependencies: bool) -> CheckResult:
+    stale = stale_generated_files(GENERATED_RESULTS_STDLIB_ONLY)
+    checked_count = len(GENERATED_RESULTS_STDLIB_ONLY)
+
+    missing_packages = missing_scientific_packages()
+    if missing_packages:
+        if stale:
+            return CheckResult("generated results", Status.FAIL, "\n".join(stale))
+        detail = (
+            f"checked {checked_count} stdlib generated file(s); skipped scientific freshness checks "
+            "because required packages are not installed: " + ", ".join(missing_packages)
+        )
+        status = Status.FAIL if require_dependencies else Status.WARN
+        return CheckResult("generated results", status, detail)
+
+    stale.extend(stale_generated_files(GENERATED_RESULTS_REQUIRING_SCIENTIFIC_STACK))
+    checked_count += len(GENERATED_RESULTS_REQUIRING_SCIENTIFIC_STACK)
     if stale:
         return CheckResult("generated results", Status.FAIL, "\n".join(stale))
-    return CheckResult("generated results", Status.PASS, f"checked {len(GENERATED_RESULTS)} generated files")
+    return CheckResult("generated results", Status.PASS, f"checked {checked_count} generated files")
 
 
 def run_checks(include_generated: bool, require_generated_dependencies: bool) -> int:

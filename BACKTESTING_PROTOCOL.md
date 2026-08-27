@@ -25,6 +25,11 @@ requires.**
 Everything in this document follows from that single fact. The protocol is not bureaucracy; it
 is the minimum needed to distinguish a result from the noise a search generates by construction.
 
+The paired risk is false negatives: a protocol can be so strict that it rejects real but modest
+edges. [`results/research_power.md`](results/research_power.md) stress-tests this validation
+process directly and shows that the V1 Sharpe range has low statistical power unless the trial
+count stays very small.
+
 ---
 
 ## 2. Data
@@ -175,8 +180,8 @@ Once. Frozen configuration. Reported in full whatever it says.
 | Metric | Threshold |
 |---|---|
 | **Out-of-sample Sharpe vs. B2** (vol-targeted buy & hold) | Must exceed it |
-| **Deflated Sharpe Ratio** | > 0 at the logged trial count |
-| **Probabilistic Sharpe Ratio** | > 0.95 |
+| **Selection-sample Deflated Sharpe Ratio** | > 0 at the logged trial count; applied to the sample where selection occurred |
+| **Fresh OOS Probabilistic Sharpe Ratio** | > 0.95 against the benchmark hurdle, without re-applying selection bias |
 | **Calmar** (CAGR / MaxDD) | > 0.5 |
 | **Independent trade count** | ≥ 100 where achievable — see note below |
 | **CPCV Sharpe distribution, 5th percentile** | > B2 point estimate |
@@ -189,6 +194,10 @@ Once. Frozen configuration. Reported in full whatever it says.
 > ([STRATEGY_HYPOTHESES.md](STRATEGY_HYPOTHESES.md) §5.3). Rather than loosen the threshold after
 > the fact, the gate is the CPCV 5th-percentile criterion above, which is stricter. Trade count
 > remains reported, and low counts are stated as the power limitation they are.
+
+**Implementation note:** DSR higher-moment terms are computed in per-observation units and only
+annualised for reporting. Feeding annualised Sharpe into a per-observation skew/kurtosis
+denominator overstates confidence.
 
 ### 5.2 Descriptive — always reported, never optimised against
 
@@ -207,7 +216,10 @@ average loss · payoff ratio · exposure · turnover · longest losing streak ·
 6. **All four benchmarks** (B1–B4, [STRATEGY_HYPOTHESES.md](STRATEGY_HYPOTHESES.md) §5.2).
 
 A result missing any of these is not reportable. This is the mechanism that makes the Deflated
-Sharpe computable — a trial count reconstructed after the fact is worthless.
+Sharpe computable. Selection-bias correction is applied to the development/validation sample used
+for selection; applying the same trial-count penalty again to a fresh OOS or locked test estimate
+double-counts the penalty and can make the gate impossible to pass. A trial count reconstructed
+after the fact is worthless.
 
 ### 5.4 Return/risk framing
 

@@ -30,3 +30,4 @@ ci: install verify-strict
 regenerate-results:
 	$(PYTHON) research/analysis/return_target_feasibility.py > results/return_target_feasibility.md
 	$(PYTHON) research/analysis/lot_granularity.py > results/lot_granularity.md
+	$(PYTHON) research/analysis/research_power.py > results/research_power.md
