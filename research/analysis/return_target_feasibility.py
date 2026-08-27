@@ -29,7 +29,8 @@ import math
 from dataclasses import dataclass
 
 import numpy as np
-from scipy import stats
+
+from _stats import expected_max_sharpe_under_null, sharpe_standard_error
 
 SEED = 20260826
 DAYS_PER_YEAR = 365  # crypto trades 24/7/365
@@ -178,37 +179,6 @@ def simulate(sharpe: float, ann_vol: float, model: str, rng: np.random.Generator
 # ---------------------------------------------------------------------------
 # Q3: can we even measure the Sharpe we would need?
 # ---------------------------------------------------------------------------
-
-
-def sharpe_standard_error(sharpe: float, years: float, obs_per_year: int = DAYS_PER_YEAR) -> float:
-    """Lo (2002) asymptotic SE of an annualised Sharpe estimate, iid case.
-
-    SE(S_hat) ~ sqrt((1 + S^2/2) / T) with T in years. Serial correlation and
-    negative skew make the true SE larger, so this is a *lower bound* on our
-    uncertainty.
-    """
-    del obs_per_year
-    return math.sqrt((1.0 + sharpe**2 / 2.0) / years)
-
-
-def expected_max_sharpe_under_null(n_trials: int, se: float) -> float:
-    """Expected best in-sample Sharpe from `n_trials` worthless strategies.
-
-    Bailey & Lopez de Prado's expected-maximum-Sharpe approximation for N
-    independent trials each drawn from N(0, se^2):
-
-        E[max] ~ se * ((1-g) * z(1 - 1/N) + g * z(1 - 1/(N*e)))
-
-    with g the Euler-Mascheroni constant. This is the number an *edgeless*
-    search is expected to produce. Any in-sample Sharpe below it is evidence
-    of nothing at all.
-    """
-    if n_trials < 2:
-        return 0.0
-    g = 0.5772156649015329
-    z1 = stats.norm.ppf(1.0 - 1.0 / n_trials)
-    z2 = stats.norm.ppf(1.0 - 1.0 / (n_trials * math.e))
-    return se * ((1.0 - g) * z1 + g * z2)
 
 
 # ---------------------------------------------------------------------------

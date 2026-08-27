@@ -25,6 +25,58 @@ requires.**
 Everything in this document follows from that single fact. The protocol is not bureaucracy; it
 is the minimum needed to distinguish a result from the noise a search generates by construction.
 
+## 1.1 …and the protocol's own power, which is worse than expected
+
+A protocol that never approves a bad strategy but also never approves a good one is not a
+success. [`results/research_power.md`](results/research_power.md) simulates **this protocol**
+(not any strategy) against a search containing one genuinely-edged candidate and N worthless
+ones. The results are uncomfortable and were not anticipated when the gates were written:
+
+| True Sharpe of the real edge | Max power (single pre-specified candidate) | Trials affordable at 10% power |
+|---|---|---|
+| 0.4 | **5.1%** | none |
+| 0.6 | **13.8%** | 1 |
+| 0.8 | 27.4% | 3 |
+| 1.0 | 42.6% | 12 |
+| 1.3 | 61.9% | 150 |
+
+Two findings, both actionable:
+
+1. **The gates are calibrated for an effect size we do not expect to find.** Against a true
+   Sharpe of 0.6 — the middle of V1's predicted range — the protocol approves a genuine edge
+   only ~14% of the time *even with zero search*. The binding constraint is the Deflated Sharpe
+   gate, which passes only 4.2% of real Sharpe-0.6 strategies at 10 trials.
+2. **Search cost is brutal and non-linear.** The probability that the search even *selects* the
+   real candidate falls from 100% at 1 trial to 16% at 100 and 4.7% at 1,000. A larger search is
+   a worse search: each extra worthless candidate is another lottery ticket for noise, and noise
+   has a 5-year standard error of 0.45 against a real edge whose mean is 0.6.
+
+**Consequences already adopted:** V1 is specified with *zero fitted parameters*
+([STRATEGY_HYPOTHESES.md](STRATEGY_HYPOTHESES.md) §5.1), which costs ~1 trial rather than
+thousands. That decision was made on general principle; this analysis shows it was the
+difference between ~14% power and effectively none.
+
+**Recalibration proposed, requiring sign-off** — a pre-data calibration decision, explicitly
+*not* a gate relaxed after seeing results:
+
+- Lower the Deflated Sharpe gate from 95% to **90%** confidence, accepting a higher
+  false-deployment rate (currently ~0.2%, which is far more conservative than necessary).
+- Treat the **90-day demo forward test and live sequential monitoring as the primary filter**,
+  rather than asking the backtest gate to carry a load its sample size cannot bear.
+- Keep the trial budget as a hard pre-registered number, not an aspiration.
+
+Until that sign-off, the gates stand as written and we proceed expecting the protocol to return
+"cannot demonstrate an edge" — which, given the above, would be weak evidence against the
+strategy rather than strong evidence.
+
+> **A correction this analysis surfaced.** The first version of this protocol applied the
+> Deflated Sharpe correction to the *out-of-sample* estimate. That is wrong and it double-counts:
+> selection bias contaminates the sample on which selection occurred, not a fresh sample.
+> Conditional on the strategy, an out-of-sample estimate is unbiased. The deflation now applies
+> to the development sample, and the out-of-sample record faces a plain benchmark test. The
+> mis-specified version demanded an out-of-sample Sharpe above 2.90 and would have rejected
+> literally everything.
+
 ---
 
 ## 2. Data
